@@ -2,12 +2,13 @@ package keycloak
 
 import (
 	"cafe-app-backend/internal/dtos/authDto"
+	"cafe-app-backend/utils"
 	"context"
 	"fmt"
 	"os"
 
 	"github.com/Nerzal/gocloak/v13"
-	"github.com/opentracing/opentracing-go/log"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/pkg/errors"
 )
 
@@ -27,16 +28,6 @@ type KeycloakService struct {
 	realm               string
 	restApiClientId     string
 	restApiClientSecret string
-}
-
-// GetCompanyUsers implements Keycloak.
-func (k *KeycloakService) GetCompanyUsers(ctx context.Context, companyId int) ([]*gocloak.User, error) {
-	panic("unimplemented")
-}
-
-// GetUsers implements Keycloak.
-func (k *KeycloakService) GetUsers(ctx context.Context, params gocloak.GetUsersParams) ([]*gocloak.User, error) {
-	panic("unimplemented")
 }
 
 func (k *KeycloakService) LoginRestApiClient(ctx context.Context) (*gocloak.JWT, error) {
@@ -84,13 +75,13 @@ func (k *KeycloakService) Register(ctx context.Context, user authDto.KeycloakReg
 	err = client.SetPassword(ctx, token.AccessToken, userId, k.realm, user.Password, false)
 	if err != nil {
 		log.Error(err)
-		return nil, errors.New("unable to set the pasword for the user")
+		return nil, errors.Wrap(err, "unable to set the pasword for the user")
 	}
 
 	userKeycloak, err := client.GetUserByID(ctx, token.AccessToken, k.realm, userId)
 	if err != nil {
 		log.Error(err)
-		return nil, errors.New("unable to get recently created user")
+		return nil, errors.Wrap(err, "unable to get recently created user")
 	}
 
 	return userKeycloak, nil
@@ -125,7 +116,7 @@ func (k *KeycloakService) UpdateUserPassword(ctx context.Context, user *gocloak.
 	err = client.SetPassword(ctx, token.AccessToken, *user.ID, k.realm, password, false)
 	if err != nil {
 		log.Error(err)
-		return errors.New("unable to set the pasword for the user")
+		return errors.Wrap(err, "unable to set the pasword for the user")
 	}
 
 	return nil
@@ -152,4 +143,199 @@ func (k *KeycloakService) ApproveUser(ctx context.Context, userId string) error 
 	}
 
 	return nil
+}
+
+func (k *KeycloakService) GetCompanyUsers(ctx context.Context, companyId int) ([]*gocloak.User, error) {
+	token, err := k.LoginRestApiClient(ctx)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	params := gocloak.GetUsersParams{
+		Q:       gocloak.StringP(fmt.Sprintf("company_Id:%d", companyId)),
+		Enabled: gocloak.BoolP(true),
+	}
+
+	client := gocloak.NewClient(k.baseurl)
+
+	users, err := client.GetUsers(ctx, token.AccessToken, k.realm, params)
+	if err != nil {
+		log.Error(err)
+		return nil, errors.Wrap(err, "unable to get users")
+	}
+
+	return users, nil
+
+}
+
+func (k *KeycloakService) GetUsers(ctx context.Context, params gocloak.GetUsersParams) ([]*gocloak.User, error) {
+	token, err := k.LoginRestApiClient(ctx)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	client := gocloak.NewClient(k.baseurl)
+
+	users, err := client.GetUsers(ctx, token.AccessToken, k.realm, params)
+	if err != nil {
+		log.Error(err)
+		return nil, errors.Wrap(err, "unable to get users")
+	}
+
+	return users, nil
+}
+
+func (k *KeycloakService) FindUseR(ctx context.Context, username string) (*gocloak.User, error) {
+	token, err := k.LoginRestApiClient(ctx)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	client := gocloak.NewClient(k.baseurl)
+
+	userParams := gocloak.GetUsersParams{
+		Email: &username,
+	}
+
+	if !utils.EmailRegex(username) {
+		userParams = gocloak.GetUsersParams{
+			Username: &username,
+		}
+	}
+
+	users, err := client.GetUsers(ctx, token.AccessToken, k.realm, userParams)
+	if err != nil {
+		log.Error(err)
+		return nil, errors.Wrap(err, "unable to get users")
+	}
+
+	if len(users) == 0 {
+		log.Info("user not found")
+		return nil, nil
+	}
+
+	return users[0], nil
+}
+
+func (k *KeycloakService) ResetPassword(ctx context.Context, user authDto.KeycloakUpdateUserPassword) error {
+	token, err := k.LoginRestApiClient(ctx)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	client := gocloak.NewClient(k.baseurl)
+
+	userKeycloak, err := k.FindUseR(ctx, user.Email)
+	if err != nil {
+		log.Error(err)
+		return errors.Wrap(err, "unable to get user by email")
+	}
+
+	err = client.SetPassword(ctx, token.AccessToken, *userKeycloak.ID, k.realm, user.Password, false)
+	if err != nil {
+		log.Error(err)
+		return errors.Wrap(err, "unable to set password")
+	}
+
+	return nil
+}
+
+func (k *KeycloakService) UpdateUserWithoutEnable(ctx context.Context, user *gocloak.User) error {
+	token, err := k.LoginRestApiClient(ctx)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	client := gocloak.NewClient(k.baseurl)
+
+	err = client.UpdateUser(ctx, token.AccessToken, k.realm, *user)
+	if err != nil {
+		return errors.Wrap(err, "unable to update user")
+	}
+
+	return nil
+}
+
+func (k *KeycloakService) RemoveRoleFromUser(ctx context.Context, userId, roleName string) error {
+	token, err := k.LoginRestApiClient(ctx)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	client := gocloak.NewClient(k.baseurl)
+
+	roleKeycloak, err := client.GetRealmRole(ctx, token.AccessToken, k.realm, roleName)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	err = client.DeleteRealmRoleFromUser(ctx, token.AccessToken, k.realm, userId, []gocloak.Role{
+		*roleKeycloak,
+	})
+
+	if err != nil {
+		log.Error(err)
+		return errors.Wrap(err, "unable to remove role from user")
+	}
+
+	return nil
+
+}
+
+func (k *KeycloakService) AssignNewRoleToUser(ctx context.Context, userId, roleName string) error {
+	token, err := k.LoginRestApiClient(ctx)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	client := gocloak.NewClient(k.baseurl)
+
+	roleKeycloak, err := client.GetRealmRole(ctx, token.AccessToken, k.realm, roleName)
+	if err != nil {
+		log.Error(err)
+		return errors.Wrap(err, fmt.Sprintf("unable to get role %v", roleName))
+	}
+
+	err = client.AddRealmRoleToUser(ctx, token.AccessToken, k.realm, userId, []gocloak.Role{
+		*roleKeycloak,
+	})
+
+	if err != nil {
+		log.Error(err)
+		return errors.Wrap(err, "unable to add a realm role to user")
+	}
+
+	return nil
+}
+
+func (k *KeycloakService) GetBrachUseR(ctx context.Context, branchId int) ([]*gocloak.User, error) {
+	token, err := k.LoginRestApiClient(ctx)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	//Create a GetUsersParams struct with additional parameters
+	params := gocloak.GetUsersParams{
+		Q:       gocloak.StringP(fmt.Sprintf("branchId:%v", branchId)),
+		Enabled: gocloak.BoolP(true),
+	}
+
+	client := gocloak.NewClient(k.baseurl)
+
+	users, err := client.GetUsers(ctx, token.AccessToken, k.realm, params)
+	if err != nil {
+		log.Error(err)
+		return nil, errors.Wrap(err, "unable to get users")
+	}
+
+	return users, nil
 }

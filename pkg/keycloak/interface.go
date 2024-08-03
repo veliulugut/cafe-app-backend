@@ -17,4 +17,10 @@ type Keycloak interface {
 	ApproveUser(ctx context.Context, userId string) error
 	GetUsers(ctx context.Context, params gocloak.GetUsersParams) ([]*gocloak.User, error)
 	GetCompanyUsers(ctx context.Context, companyId int) ([]*gocloak.User, error)
+	ResetPassword(ctx context.Context, user authDto.KeycloakUpdateUserPassword) error
+	FindUseR(ctx context.Context, username string) (*gocloak.User, error)
+	UpdateUserWithoutEnable(ctx context.Context, user *gocloak.User) error
+	RemoveRoleFromUser(ctx context.Context, userId, roleName string) error
+	AssignNewRoleToUser(ctx context.Context, userId, roleName string) error
+	GetBrachUseR(ctx context.Context, branchId int) ([]*gocloak.User, error)
 }
