@@ -1,0 +1,21 @@
+{
+    "user_not_found": "Kullanıcı bulunamadı.",
+  "user_already_exists": "Kullanıcı zaten mevcut.",
+  "invalid_phone_number": "Geçersiz telefon numarası.",
+  "invalid_password": "Gecersiz sifre.",
+  "jwt_generation_error": "JWT oluşturulurken hata oluştu.",
+  "role_not_found": "Rol bulunamadı.",
+  "user_not_approved": "Kullanıcı onaylanmamış.",
+  "user_already_approved": "Kullanıcı zaten onaylanmış.",
+  "user_not_active": "Kullanıcı aktif değil.",
+  "user_already_active": "Kullanıcı zaten aktif.",
+  "invalid_validation_code": "Geçersiz doğrulama kodu.",
+  "validation_code_expired": "Doğrulama kodu süresi geçmiş.",
+  "validation_code_not_found": "Doğrulama kodu bulunamadı.",
+  "passwords_not_match":"Girilen şifreler eşleşmiyor.",
+  "product_already_exists": "Ürün zaten mevcut.",
+  "product_not_found": "Ürün bulunamadı.",
+  "id_must_be_number": "ID sayısal bir değer olmalıdır.",
+  "product_save_successfully": "Ürün başarıyla kaydedildi.",
+  "product_update_successfully": "Ürün başarıyla güncellendi."
+}

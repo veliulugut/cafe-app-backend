@@ -1,0 +1,21 @@
+{
+    "user_not_found": "User not found.",
+  "user_already_exists": "User already exists.",
+  "invalid_phone_number": "Invalid phone number.",
+  "invalid_password": "Invalid password.",
+  "jwt_generation_error": "Error creating JWT.",
+  "role_not_found": "Role not found.",
+  "user_not_approved": "User is not approved.",
+  "user_already_approved": "User is already approved.",
+  "user_not_active": "User is not active.",
+  "user_already_active": "User is already active.",
+  "invalid_validation_code": "Invalid validation code.",
+  "validation_code_expired": "Validation code expired.",
+  "validation_code_not_found": "Validation code not found.",
+  "passwords_not_match": "Passwords entered do not match.",
+  "product_already_exists": "Product already exists.",
+  "product_not_found": "Product not found.",
+  "id_must_be_number": "ID must be a numeric value.",
+  "product_save_successfully": "Product saved successfully.",
+  "product_update_successfully": "The product was updated successfully."
+}
