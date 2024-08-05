@@ -5,7 +5,10 @@ go 1.22.5
 require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/pkg/errors v0.9.1
+	golang.org/x/crypto v0.17.0
 )
+
+require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 
 require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -30,4 +33,5 @@ require (
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
+	gopkg.in/mail.v2 v2.3.1
 )
